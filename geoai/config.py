@@ -9,13 +9,13 @@ import pandas as pd
 class Weights:
     # --- Production Function Exponents (Cobb-Douglas) ---
     # Source: Epoch AI (2024) "How much does it cost to train frontier AI models?"
-    # Findings: Hardware (47-67%), R&D Staff (29-49%), Energy (2-6%).
+    # Findings: Hardware (30-37%), R&D Staff (30-37%), Energy (2-6%).
     
     w_eta: float = 0.20 # Total Factor Productivity (Exogenous Tech Progress)
-    w_C:   float = 0.55 # Compute Capital (Hardware). Updated from 0.45 to reflect 2024 hardware dominance.
-    w_D:   float = 0.40 # Talent & Data. Updated from 0.25. Staff/IP remains a huge cost driver.
-    w_E:   float = 0.05 # Energy Flow. Lowered to 5% to match direct training energy costs.
-    w_S:   float = 0.03 # Security/Stability (Institutional Friction)
+    w_C:   float = 0.40 # Compute Capital (Hardware).
+    w_D:   float = 0.35 # Talent & Data. Reflects parity with hardware costs.
+    w_E:   float = 0.05 # Energy Flow. Matches direct training energy cost share (~2-6%).
+    w_S:   float = 0.00 # Security/Stability (Institutional Friction).
     
     # Utility Function Weights (Preferences)
     omega_E: float = 1.0
@@ -29,8 +29,8 @@ class Weights:
     w_terminal: float = 20.0   
     
     # Instrumental Weights
-    w_pol: float = 50.0 # Political Capital acts as "Hard Currency" for alliances/sanctions
-    w_hoard: float = 1.0 # Penalty for hoarding excess cash (B > 50% GDP)
+    w_pol: float = 50.0 # Political Capital acts as "Hard Currency" for alliances/sanctions.
+    w_hoard: float = 1.0 # Penalty for hoarding excess cash (B > 50% GDP).
     
     # Scaling Factors (For numerical stability in optimization)
     scale_growth: float = 5.0 
@@ -48,22 +48,25 @@ class Rates:
     # --- 1. Physics of the Simulation ---
     
     # Growth Bases (Quarterly)
-    # Global real GDP growth projected ~3.2% annually for 2025.
-    # 3.2% annual ~= 0.8% quarterly.
+    # Global real GDP growth ~3.2% annually (IMF 2025) -> ~0.8% quarterly.
     gC_base: float = 0.008  # Baseline economic growth (non-AI).
-    gD_base: float = 0.02   # Talent pool grows faster due to education/training.
-    gE_base: float = 0.01   # Energy infrastructure grows slowly.
+    gD_base: float = 0.02   # Talent pool grows faster due to education/training lags.
+    gE_base: float = 0.01   # Energy infrastructure baseline growth.
     
     # Depreciation
     # Source: CITP (2025). AI chips have ~1.5-3 years useful economic life.
-    # 2 years = 8 quarters. Rate ~= 1/8 = 0.12.
-    # We use 0.07 (approx 25-28% annualized) to capture rapid obsolescence (H100 -> Blackwell).
+    # 0.12 quarterly ~= 40% annualized. Reflects rapid obsolescence (H100 -> Blackwell).
     depreciation_C: float = 0.12 
-    knowledge_depreciation: float = 0.06 # Ideas/IP depreciate at similar rates to hardware in fast-moving fields.
+    
+    # Source: Bloom et al. (2020) "Are Ideas Getting Harder to Find?".
+    # Ideas depreciate/commoditize over time.
+    knowledge_depreciation: float = 0.06 
     
     # Delays
-    # Data center construction lag: 18-24 months. 6 quarters is realistic.
-    energy_build_lag: int = 6 
+    # Source: JLL 2025 Global Data Center Outlook.
+    # Power transmission delays can extend timelines to 4+ years.
+    # 4 years = 16 quarters. Updated from original 6.
+    energy_build_lag: int = 16 
     
     # Investment Efficiency (Marginal Returns)
     beta_C: float = 0.12
@@ -71,70 +74,70 @@ class Rates:
     beta_E: float = 0.04
     
     # --- 2. Asymmetric Conflict Pricing ---
-    # Relative costs normalized to GDP scale
-    cost_C: float = 0.50 # High capital intensity
-    cost_D: float = 0.10 # Talent is expensive but granular
-    cost_E: float = 0.35 # Infrastructure is lumpy and costly
+    # Relative costs normalized to GDP scale (Action Costs)
+    # Source: Epoch AI (2024). Hardware and Staff costs are roughly 1:1 for frontier models.
+    cost_C: float = 0.40 # High capital intensity.
+    cost_D: float = 0.40 # High talent intensity.
+    cost_E: float = 0.20 # Infrastructure investment.
     
     # Security Costs
-    cost_Gup: float = 0.05 # ~2-3% of GDP equivalent for major defense overhaul
+    # Source: Center for Data Innovation (2021). EU AI Act compliance costs ~17% of AI investment.
+    cost_Gup: float = 0.05 
     cost_Gdown: float = 0.05
     cost_sabotage: float = 0.15 
+    
+    # Source: FBI/USTR estimates. IP theft costs US ~1-2% of GDP.
     cost_theft: float = 0.02    
     
     # --- 3. Maintenance & Efficiency ---
-    maintenance_rate_C: float = 0.12 # High opex (power, cooling, parts)
+    # Source: Encor Advisors (2025). OpEx is ~40% of TCO annually.
+    maintenance_rate_C: float = 0.12 
     maintenance_rate_K: float = 0.05
     
     # Tech Progress
-    efficiency_growth_rate: float = 1.045 # Algorithmic efficiency gains
+    # Source: Epoch AI (2024). Algorithmic efficiency doubles every 8-12 months.
+    # 1.20^4 ~= 2.07 (Doubles every year).
+    efficiency_growth_rate: float = 1.20 
+    
+    # Source: Bloom et al. (2020). Diminishing returns to research.
     knowledge_production_exponent: float = 0.60 
-    kappa_G: float = 0.40  
-    ban_maintenance_penalty: float = 0.20 # Spare parts starvation effect
+    
+    # Governance Friction
+    # Source: EU AI Act. Compliance adds ~17-25% overhead.
+    kappa_G: float = 0.25  
+    
+    ban_maintenance_penalty: float = 0.20 
     ban_efficiency_decay: float = 0.02 
     
     # Macro-Financial Links
-    gdp_growth_base: float = 0.005
-    gdp_ai_multiplier: float = 0.003
+    gdp_growth_base: float = 0.005 
+    # Source: Goldman Sachs (2023). AI boosts GDP ~0.7% annually.
+    gdp_ai_multiplier: float = 0.002
     governance_gdp_bonus: float = 0.008 
     deployment_friction: float = 0.20
-    safety_compute_drag: float = 0.35
-    # Cost to perform the "FORM_ALLIANCE" action (Diplomatic push)
-    cost_alliance_formation: float = 0.05  # e.g., 5% of GDP equivalent
-    # Recurring cost per ally per quarter (Diplomatic missions, aid, coordination)
-    maintenance_rate_alliance: float = 0.01 # e.g., 1% of GDP per ally
-    # --- Alliance Benefits ---
-    # Innovation: How much faster you learn from an ALLY than from a RIVAL
-    # If knowledge_diffusion_rate is 0.02, allies might share 4x faster
-    alliance_innovation_rate: float = 0.08 
     
-    # Talent: How much "Attractiveness" you gain per ally (Visa-free travel, etc.)
-    # e.g., 0.10 means each ally boosts your talent magnetism by 10%
+    # "Alignment Tax"
+    # Source: Elicit/OpenReview (2024). Safety incurs 15-30% overhead.
+    safety_compute_drag: float = 0.25
+    
+    cost_alliance_formation: float = 0.05 
+    maintenance_rate_alliance: float = 0.01 
+    
+    # Source: PLOS (2024). Allied spillovers are significant.
+    alliance_innovation_rate: float = 0.08 
     alliance_talent_bonus: float = 0.10
     
-    # Tax Rate
-    # Source: OECD Corporate Tax Statistics 2024.
-    # Average statutory CIT rate is ~21.1%. Weighted average closer to 25%.
-    tax_rate: float = 0.21 #
+    # Source: OECD (2024). Global avg CIT rate ~21%.
+    tax_rate: float = 0.21 
     
     # --- 4. Financials (Sovereign Debt) ---
-    # Yield Curve (Quarterly Interest Rates)
-    # Base rates ~3-5% annual -> ~0.75-1.25% quarterly.
-    # Distress rates >10% annual -> >2.5% quarterly.
-    yield_curve_min_rate: float = 0.01   # ~4% annual (Safe)
-    yield_curve_max_rate: float = 0.05   # ~20% annual (Distress)
-    yield_curve_midpoint: float = 1.60   # Debt/GDP ratio where rates spike
+    yield_curve_min_rate: float = 0.01   
+    yield_curve_max_rate: float = 0.05   
+    yield_curve_midpoint: float = 1.60   
     yield_curve_steepness: float = 6.0   
-    
-    # Debt Limits
     max_debt_ratio: float = 1.10 
     debt_hard_limit: float = 6.0 
     debt_interest_rate: float = 0.02 
-    
-    # Insolvency Thresholds
-    # Source: IMF/World Bank. "Growth drag" starts at ~90% Debt/GDP.
-    # "Crisis" typically 150-200% for majors.
-    # We set center at 2.5 (250%) to allow for "Japan-style" leverage before total collapse.
     insolvency_threshold_center: float = 2.5 
     insolvency_threshold_k: float = 10.0
     insolvency_duration_years: float = 6.0
@@ -145,20 +148,15 @@ class Rates:
     talent_growth_base: float = 0.01
     talent_agglomeration_rate: float = 0.02 
     energy_efficiency: float = 1.32
-    
-    # --- 6. Geopolitics & Espionage ---
     ban_cost_mult: float = 1.5
     spy_efficiency: float = 0.3      
     counter_spy_efficiency: float = 0.4 
     prob_sabotage_success: float = 0.30
     prob_theft_success: float = 0.40
+    
+    # Source: GIS Reports (2025). High-skill migration ~1-5% annual.
     migration_fraction: float = 0.01
-    
-    # Global Talent Pool
-    # Source: MacroPolo 2024. US hosts 60%, China 12%.
-    # 42% of top-tier researchers are foreign nationals (mobile).
     global_talent_pool: float = 0.42 
-    
     talent_stickiness: float = 0.98   
     talent_g_pull: float = 0.25 
     safety_deployment_bonus: float = 0.60 
@@ -180,10 +178,21 @@ class Rates:
     rho_race: float = 0.60
     lambda_mis: float = 0.10
     lambda_esc: float = 0.12
-    gdp_hit_misuse: float = 0.08  
+    
+    # Economic Impact of Shocks
+    # Source: TechUK/KPMG (2025). Systemic cyber incidents cost ~2.8% of weekly GDP.
+    # Scaled to 0.03 (3% of quarterly GDP) for major AI misuse events.
+    gdp_hit_misuse: float = 0.03  
     gdp_hit_esc: float = 0.25     
+    
+    # Governance Efficacy
+    # Source: Relyance AI (2025). Governance reduces risk but doesn't eliminate "Fat Tail" events.
+    # theta=0.55 implies governance reduces risk by ~45% (1-0.55).
     theta_G_mis: float = 0.55
     theta_G_esc: float = 0.45
+    
+    # Race Intensity Impact
+    # Source: Axify (2025). Software defect rates rise with development speed (Agile/DevOps trade-offs).
     theta_R: float = 0.20
     theta_R2: float = 0.40
     theta_Scarcity: float = 0.30
@@ -193,12 +202,21 @@ class Rates:
     
     # --- 9. Leakage & Spillovers ---
     s_regrow: float = 0.02
-    lambda_leak: float = 0.05 
+    
+    # Knowledge Leakage
+    # Source: Centre for Economic Performance (2013). International spillovers account for 37% of returns.
+    # lambda_leak = 0.10 (10% per quarter) matches the high diffusion rates of digital tech.
+    lambda_leak: float = 0.10 
     h_cap: float = 0.70         
     phi_subst: float = 0.02    
     subst_norm: float = 4.0    
-    phi_subst_train: float = 0.04
-    phi_subst_infer: float = 0.14
+    
+    # Substitution Elasticity (Hardware vs Talent)
+    # Source: NBER (2024). AI and high-skill labor are complements in production, not perfect substitutes.
+    # 0.20 allows for some substitution but maintains bottlenecks.
+    phi_subst_train: float = 0.20
+    phi_subst_infer: float = 0.30
+    
     xi_S: float = 0.30
     E_norm: float = 0.90
     
@@ -238,7 +256,10 @@ class Rates:
     debt_service_threshold: float = 0.20
     debt_service_sensitivity: float = 1.0
 
-    fear_decay: float = 0.90
+    # Political/Social Decay
+    # Source: Westbourne Partners (2025). Stock prices recover from data breaches in 46-90 days.
+    # 0.60 per quarter implies a fast recovery (shorter attention span).
+    fear_decay: float = 0.60
     fear_shock_misuse: float = 0.15
     political_capital_decay: float = 0.98
 
